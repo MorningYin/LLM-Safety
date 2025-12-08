@@ -1,6 +1,6 @@
+
 import torch
 import functools
-import os
 
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from typing import List
@@ -12,18 +12,19 @@ from pipeline.model_utils.model_base import ModelBase
 
 # Llama 3 chat templates are based on
 # - https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-3/
+# <|begin_of_text|> is automatically added by the tokenizer
 
-LLAMA3_CHAT_TEMPLATE = """"<|begin_of_text|><|start_header_id|>user<|end_header_id|>
+LLAMA3_CHAT_TEMPLATE = """<|start_header_id|>user<|end_header_id|>
 
 {instruction}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
 """
 
-LLAMA3_CHAT_TEMPLATE_WITH_SYSTEM = """"<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+LLAMA3_CHAT_TEMPLATE_WITH_SYSTEM = """<|start_header_id|>system<|end_header_id|>
 
 {system_prompt}<|eot_id|><|start_header_id|>user<|end_header_id|>
 
-{{instruction}}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+{instruction}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
 """
 
@@ -99,7 +100,6 @@ class Llama3Model(ModelBase):
             torch_dtype=dtype,
             trust_remote_code=True,
             device_map="auto",
-            cache_dir=os.getenv("HUGGINGFACE_CACHE_DIR"),
         ).eval()
 
         model.requires_grad_(False) 
@@ -131,6 +131,9 @@ class Llama3Model(ModelBase):
     
     def _get_mlp_modules(self):
         return torch.nn.ModuleList([block_module.mlp for block_module in self.model_block_modules])
+
+    def _get_o_proj_modules(self):
+        return torch.nn.ModuleList([block_module.self_attn.o_proj for block_module in self.model_block_modules])
 
     def _get_orthogonalization_mod_fn(self, direction: Float[Tensor, "d_model"]):
         return functools.partial(orthogonalize_llama3_weights, direction=direction)

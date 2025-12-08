@@ -1,7 +1,6 @@
 
 import torch
 import functools
-import os
 
 from torch import Tensor
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -67,7 +66,7 @@ def tokenize_instructions_gemma_chat(
 
     return result
 
-def orthogonalize_gemma_weights(model: AutoTokenizer, direction: Float[Tensor, "d_model"]):
+def orthogonalize_gemma_weights(model, direction: Float[Tensor, "d_model"]):
     model.model.embed_tokens.weight.data = get_orthogonalized_matrix(model.model.embed_tokens.weight.data, direction)
 
     for block in model.model.layers:
@@ -89,8 +88,8 @@ class GemmaModel(ModelBase):
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
             torch_dtype=dtype,
-            device_map="cuda",
-            cache_dir=os.getenv("HUGGINGFACE_CACHE_DIR"),
+            device_map="auto",  # 改为 auto，与其他模型一致
+            attn_implementation="eager",  # 修复 Gemma 2 2B 在 padding tokens 时输出 NaN 的问题
         ).eval()
 
         model.requires_grad_(False) 
@@ -100,6 +99,9 @@ class GemmaModel(ModelBase):
     def _load_tokenizer(self, model_path):
         tokenizer = AutoTokenizer.from_pretrained(model_path)
         tokenizer.padding_side = 'left'
+        # 添加 pad_token 设置，使用 eos_token 作为 pad_token（与其他模型一致）
+        if tokenizer.pad_token is None:
+            tokenizer.pad_token = tokenizer.eos_token
 
         return tokenizer
 
@@ -107,7 +109,14 @@ class GemmaModel(ModelBase):
         return functools.partial(tokenize_instructions_gemma_chat, tokenizer=self.tokenizer, system=None, include_trailing_whitespace=True)
 
     def _get_eoi_toks(self):
-        return self.tokenizer.encode(GEMMA_CHAT_TEMPLATE.split("{instruction}")[-1], add_special_tokens=False)
+        """获取 EOI tokens。
+        
+        返回模板中 instruction 之后的部分，即 EOI marker tokens。
+        对于 Gemma，这是 '<end_of_turn>\n<start_of_turn>model\n' 的 tokenized 形式。
+        """
+        # 直接返回模板后缀的 tokens
+        eoi_suffix = GEMMA_CHAT_TEMPLATE.split("{instruction}")[-1]
+        return self.tokenizer.encode(eoi_suffix, add_special_tokens=False)
 
     def _get_refusal_toks(self):
         return GEMMA_REFUSAL_TOKS
@@ -120,6 +129,9 @@ class GemmaModel(ModelBase):
     
     def _get_mlp_modules(self):
         return torch.nn.ModuleList([block_module.mlp for block_module in self.model_block_modules])
+
+    def _get_o_proj_modules(self):
+        return torch.nn.ModuleList([block_module.self_attn.o_proj for block_module in self.model_block_modules])
 
     def _get_orthogonalization_mod_fn(self, direction: Float[Tensor, "d_model"]):
         return functools.partial(orthogonalize_gemma_weights, direction=direction)

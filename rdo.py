@@ -171,7 +171,10 @@ with model.trace("Hello") as tracer:
 
 # %%
 model_id = MODEL_PATH.split("/")[-1]
-dim_dir_path = f"{os.getenv('SAVE_DIR')}/{os.getenv('DIM_DIR')}/{model_id}"
+# Align DIM direction storage with pipeline Config.artifact_path logic
+save_dir = os.getenv("SAVE_DIR", "/root/autodl-tmp/rdo_res")
+dim_dir = os.getenv("DIM_DIR", model_id)
+dim_dir_path = os.path.join(save_dir, dim_dir, model_id)
 direction_file = f"{dim_dir_path}/direction.pt"
 metadata_file = f"{dim_dir_path}/direction_metadata.json"
 mean_diffs_file = f"{dim_dir_path}/generate_directions/mean_diffs.pt"
@@ -946,6 +949,16 @@ def refusal_cone_optimization(model, train_dataset,
         torch.save(lowest_loss_vector, f)
     wandb.log_artifact(artifact)
     
+    # 保存到本地文件系统
+    local_save_dir = os.path.join(SAVE_DIR, f"cone_dim_{cone_dim}")
+    os.makedirs(local_save_dir, exist_ok=True)
+    local_vectors_path = os.path.join(local_save_dir, f"vectors_run_{run_id}.pt")
+    local_lowest_loss_path = os.path.join(local_save_dir, f"lowest_loss_vector_run_{run_id}.pt")
+    torch.save(save_vectors, local_vectors_path)
+    torch.save(lowest_loss_vector, local_lowest_loss_path)
+    print(f"训练向量已保存到: {local_vectors_path}")
+    print(f"最低损失向量已保存到: {local_lowest_loss_path}")
+    
     return {"vectors": vectors, "lowest_loss": lowest_training_loss, "refusal_scores": bypass_scores, "train_losses": train_losses, "lowest_loss_vector": lowest_loss_vector}
 
 # %%
@@ -1398,6 +1411,16 @@ def repind_rdo(model,
     with artifact.new_file('lowest_loss_vector.pt', mode='wb') as f:
         torch.save(lowest_loss_vector, f)
     wandb.log_artifact(artifact)
+
+    # 保存到本地文件系统
+    local_save_dir = os.path.join(SAVE_DIR, "independent_direction")
+    os.makedirs(local_save_dir, exist_ok=True)
+    local_vectors_path = os.path.join(local_save_dir, f"vectors_run_{run_id}.pt")
+    local_lowest_loss_path = os.path.join(local_save_dir, f"lowest_loss_vector_run_{run_id}.pt")
+    torch.save(save_vectors, local_vectors_path)
+    torch.save(lowest_loss_vector, local_lowest_loss_path)
+    print(f"训练向量已保存到: {local_vectors_path}")
+    print(f"最低损失向量已保存到: {local_lowest_loss_path}")
 
     return {"vectors": save_vectors, "lowest_loss_vector": lowest_loss_vector}
 
