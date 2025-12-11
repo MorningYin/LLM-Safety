@@ -7,8 +7,8 @@ from typing import List
 from torch import Tensor
 from jaxtyping import Int, Float
 
-from pipeline.utils.utils import get_orthogonalized_matrix
-from pipeline.model_utils.model_base import ModelBase
+from refusal_direction.pipeline.utils.utils import get_orthogonalized_matrix
+from refusal_direction.pipeline.model_utils.model_base import ModelBase
 
 # Llama 2 chat templates are based on
 # - https://github.com/centerforaisafety/HarmBench/blob/main/baselines/model_utils.py
@@ -88,16 +88,19 @@ def act_add_llama2_weights(model, direction: Float[Tensor, "d_model"], coeff, la
 
 class Llama2Model(ModelBase):
 
-    def _load_model(self, model_path, dtype=torch.float16):
+    def _load_model(self, model_path, dtype=torch.bfloat16):
 
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
             torch_dtype=dtype,
             trust_remote_code=True,
             device_map="auto",
+            low_cpu_mem_usage=True,
         ).eval()
 
-        model.requires_grad_(False) 
+        model.requires_grad_(False)
+        for param in model.parameters():
+            param.requires_grad = False
 
         return model
 

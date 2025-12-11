@@ -7,8 +7,8 @@ from typing import List
 from torch import Tensor
 from jaxtyping import Int, Float
 
-from pipeline.utils.utils import get_orthogonalized_matrix
-from pipeline.model_utils.model_base import ModelBase
+from refusal_direction.pipeline.utils.utils import get_orthogonalized_matrix
+from refusal_direction.pipeline.model_utils.model_base import ModelBase
 
 # Llama 3 chat templates are based on
 # - https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-3/

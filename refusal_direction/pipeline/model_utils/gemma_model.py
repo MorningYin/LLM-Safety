@@ -7,8 +7,8 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from typing import List
 from jaxtyping import Float
 
-from pipeline.utils.utils import get_orthogonalized_matrix
-from pipeline.model_utils.model_base import ModelBase
+from refusal_direction.pipeline.utils.utils import get_orthogonalized_matrix
+from refusal_direction.pipeline.model_utils.model_base import ModelBase
 
 # Gemma chat template is based on
 # - Official Gemma documentation: https://ai.google.dev/gemma/docs/formatting
@@ -88,11 +88,14 @@ class GemmaModel(ModelBase):
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
             torch_dtype=dtype,
-            device_map="auto",  # 改为 auto，与其他模型一致
+            device_map="auto",
             attn_implementation="eager",  # 修复 Gemma 2 2B 在 padding tokens 时输出 NaN 的问题
+            low_cpu_mem_usage=True,
         ).eval()
 
-        model.requires_grad_(False) 
+        model.requires_grad_(False)
+        for param in model.parameters():
+            param.requires_grad = False
 
         return model
 

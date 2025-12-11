@@ -121,20 +121,6 @@ def train_independent_direction(config: PipelineConfig):
         # 注意：这需要 rdo.py 中的所有依赖都可用
         from rdo import (
             train_independent_vector,
-            repind_rdo,
-            DirectionalAblation,
-            CustomDataset,
-            build_prompts_and_labels,
-            generate_harmful_targets,
-            generate_harmless_targets,
-            apply_chat_template,
-            get_bypass_scores,
-            compute_ce_loss,
-            kl_div_fn,
-            get_cosine_sims_for_vector,
-            projection_einops,
-            custom_collate,
-            refusal_metric,
         )
         
         # 由于 rdo.py 使用全局变量，我们需要设置它们

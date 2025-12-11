@@ -16,8 +16,8 @@ import numpy as np
 import torch
 
 
-HF_CACHE_DEFAULT = "/root/autodl-tmp/Projects"
-HF_CACHE_DIRS = ["datasets_cache", "hub_cache", "transformers_cache"]
+HF_CACHE_DEFAULT = "/root/autodl-tmp/hf_cache"
+HF_CACHE_DIRS = ["datasets_cache"]
 NO_PROXY_LIST = "all://huggingface.co,all://cdn-lfs.huggingface.co,all://localhost,all://127.0.0.1"
 
 
@@ -32,8 +32,9 @@ def configure_hf_cache(cache_root: Optional[str | Path] = None) -> Path:
 
     os.environ["HF_HOME"] = str(root)
     os.environ["HF_DATASETS_CACHE"] = str(root / "datasets_cache")
-    os.environ["HUGGINGFACE_HUB_CACHE"] = str(root / "hub_cache")
-    os.environ["TRANSFORMERS_CACHE"] = str(root / "transformers_cache")
+    os.environ["HUGGINGFACE_HUB_CACHE"] = str(root)
+    os.environ["TRANSFORMERS_CACHE"] = str(root)
+    os.environ["HUGGINGFACE_CACHE_DIR"] = str(root)
 
     os.environ["NO_PROXY"] = NO_PROXY_LIST
     os.environ["no_proxy"] = NO_PROXY_LIST

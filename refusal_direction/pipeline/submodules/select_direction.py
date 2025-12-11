@@ -13,8 +13,8 @@ from torch import Tensor
 from tqdm import tqdm
 from einops import rearrange
 
-from pipeline.model_utils.model_base import ModelBase
-from pipeline.utils.hook_utils import add_hooks, get_activation_addition_input_pre_hook, get_direction_ablation_input_pre_hook, get_direction_ablation_output_hook
+from refusal_direction.pipeline.model_utils.model_base import ModelBase
+from refusal_direction.pipeline.utils.hook_utils import add_hooks, get_activation_addition_input_pre_hook, get_direction_ablation_input_pre_hook, get_direction_ablation_output_hook
 
 def refusal_score(
     logits: Float[Tensor, 'batch seq d_vocab_out'],

@@ -7,8 +7,8 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from typing import List
 from jaxtyping import Float
 
-from pipeline.utils.utils import get_orthogonalized_matrix
-from pipeline.model_utils.model_base import ModelBase
+from refusal_direction.pipeline.utils.utils import get_orthogonalized_matrix
+from refusal_direction.pipeline.model_utils.model_base import ModelBase
 
 # Yi chat templates are based on
 # - Official tokenizer config: https://huggingface.co/01-ai/Yi-6B-Chat/blob/main/tokenizer_config.json
@@ -97,14 +97,17 @@ def act_add_yi_weights(model, direction: Float[Tensor, "d_model"], coeff, layer)
 
 class YiModel(ModelBase):
 
-    def _load_model(self, model_path, dtype=torch.float16):
+    def _load_model(self, model_path, dtype=torch.bfloat16):
         model = AutoModelForCausalLM.from_pretrained(
             model_path,
             torch_dtype=dtype,
             device_map="auto",
+            low_cpu_mem_usage=True,
         ).eval()
 
-        model.requires_grad_(False) 
+        model.requires_grad_(False)
+        for param in model.parameters():
+            param.requires_grad = False
 
         return model
 

@@ -2,7 +2,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from torch import Tensor
 from jaxtyping import Float
-from pipeline.model_utils.model_base import ModelBase
+from refusal_direction.pipeline.model_utils.model_base import ModelBase
 
 class Vicuna13BModel(ModelBase):
     """
@@ -29,14 +29,17 @@ class Vicuna13BModel(ModelBase):
     def _load_model(self, model_name_or_path: str) -> AutoModelForCausalLM:
         """
         加载 Vicuna-13B v1.5 模型（Llama 架构）。
-        这里用 device_map="auto" + torch_dtype="auto"，你可以按需改成 CPU / 单卡等。
         """
         model = AutoModelForCausalLM.from_pretrained(
             model_name_or_path,
-            torch_dtype="auto",
+            torch_dtype=torch.bfloat16,
             device_map="auto",
+            low_cpu_mem_usage=True,
         )
         model.eval()
+        model.requires_grad_(False)
+        for param in model.parameters():
+            param.requires_grad = False
         return model
 
     def _load_tokenizer(self, model_name_or_path: str) -> AutoTokenizer:

@@ -5,6 +5,17 @@ Stage 1: 获取原始数据
 
 from __future__ import annotations
 
+import os
+
+cache_root = os.environ.get("HF_CACHE_ROOT", "/root/autodl-tmp/hf_cache")
+os.makedirs(cache_root, exist_ok=True)
+os.makedirs(os.path.join(cache_root, "datasets_cache"), exist_ok=True)
+os.environ["HF_HOME"] = cache_root
+os.environ["HF_DATASETS_CACHE"] = os.path.join(cache_root, "datasets_cache")
+os.environ["HUGGINGFACE_HUB_CACHE"] = cache_root
+os.environ["TRANSFORMERS_CACHE"] = cache_root
+os.environ["HUGGINGFACE_CACHE_DIR"] = cache_root
+
 import argparse
 import datetime
 import sys
@@ -18,7 +29,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Stage 1: 获取原始数据")
     parser.add_argument("--model_alias", type=str, required=True, help="模型别名")
     parser.add_argument("--data_type", type=str, required=True, choices=["harmful", "benign"], help="数据类型")
-    parser.add_argument("--batch_size", type=int, default=128, help="批量推理大小")
+    parser.add_argument("--batch_size", type=int, default=64, help="批量推理大小")
     parser.add_argument("--n_samples", type=int, default=None, help="限制获取的样本数量（可选，用于测试模式）")
     return parser.parse_args()
 
@@ -40,7 +51,6 @@ def main():
     stats = run_stage1(
         config,
         model_alias=args.model_alias,
-        split="vanilla",  # 统一使用 vanilla 数据，不再区分
         data_type=args.data_type,
         batch_size=args.batch_size,
         n_samples=args.n_samples,

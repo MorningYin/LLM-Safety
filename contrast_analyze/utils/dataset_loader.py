@@ -77,6 +77,24 @@ def load_dataset_jsonl(
     return dataset
 
 
+# 别名：为了向后兼容
+load_jsonl = load_dataset_jsonl
+
+
+def save_jsonl(path, items: List[dict]) -> None:
+    """保存数据到 JSONL 文件。
+    
+    Args:
+        path: 输出文件路径
+        items: 要保存的数据列表
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        for item in items:
+            f.write(json.dumps(item, ensure_ascii=False) + "\n")
+
+
 def load_contrast_data(
     model_base,
     data_type: str,

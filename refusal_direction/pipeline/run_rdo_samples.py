@@ -8,13 +8,13 @@ from dotenv import load_dotenv
 
 from dataset.load_dataset import load_dataset_split, load_dataset
 
-from pipeline.config import Config
-from pipeline.model_utils.model_factory import construct_model_base
-from pipeline.utils.hook_utils import get_activation_addition_input_pre_hook, get_all_direction_ablation_hooks
+from refusal_direction.pipeline.config import Config
+from refusal_direction.pipeline.model_utils.model_factory import construct_model_base
+from refusal_direction.pipeline.utils.hook_utils import get_activation_addition_input_pre_hook, get_all_direction_ablation_hooks
 
-from pipeline.submodules.select_direction import get_refusal_scores
-from pipeline.submodules.evaluate_jailbreak import evaluate_jailbreak
-from pipeline.submodules.evaluate_loss import evaluate_loss
+from refusal_direction.pipeline.submodules.select_direction import get_refusal_scores
+from refusal_direction.pipeline.submodules.evaluate_jailbreak import evaluate_jailbreak
+from refusal_direction.pipeline.submodules.evaluate_loss import evaluate_loss
 
 def parse_arguments():
     """Parse model path argument from command line."""
@@ -153,10 +153,18 @@ def run_pipeline(wandb_run, sample_start_idx, sample_end_idx, save_dir):
     if not model_path:
         raise ValueError("model_path not found in wandb config for the resumed run.")
     
+    # 尝试从路径反推 model_alias，如果找不到则使用路径本身
     model_alias = os.path.basename(model_path)
-    cfg = Config(model_alias=model_alias, model_path=model_path)
+    # 检查是否是已知的 alias
+    from refusal_direction.pipeline.model_utils.model_factory import MODEL_ALIASES
+    for alias, path in MODEL_ALIASES.items():
+        if path == model_path:
+            model_alias = alias
+            break
+    
+    cfg = Config(model_alias=model_alias)
 
-    model_base = construct_model_base(cfg.model_path)
+    model_base = construct_model_base(cfg.model_alias)
 
     file_path = "samples.pt"
     base_dir = save_dir # Use the argument here

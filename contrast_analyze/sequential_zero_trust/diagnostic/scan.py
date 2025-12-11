@@ -8,15 +8,14 @@ diagnostic/scan.py
 
 import os
 
-cache_root = os.environ.get("HF_CACHE_ROOT", "/root/autodl-tmp/Projects")
+cache_root = os.environ.get("HF_CACHE_ROOT", "/root/autodl-tmp/hf_cache")
 os.makedirs(cache_root, exist_ok=True)
 os.makedirs(os.path.join(cache_root, "datasets_cache"), exist_ok=True)
-os.makedirs(os.path.join(cache_root, "hub_cache"), exist_ok=True)
-os.makedirs(os.path.join(cache_root, "transformers_cache"), exist_ok=True)
 os.environ["HF_HOME"] = cache_root
 os.environ["HF_DATASETS_CACHE"] = os.path.join(cache_root, "datasets_cache")
-os.environ["HUGGINGFACE_HUB_CACHE"] = os.path.join(cache_root, "hub_cache")
-os.environ["TRANSFORMERS_CACHE"] = os.path.join(cache_root, "transformers_cache")
+os.environ["HUGGINGFACE_HUB_CACHE"] = cache_root
+os.environ["TRANSFORMERS_CACHE"] = cache_root
+os.environ["HUGGINGFACE_CACHE_DIR"] = cache_root
 
 import argparse
 import json
